@@ -1,0 +1,28 @@
+@import url('https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap');
+@import 'ol/ol.css';
+
+* {
+	box-sizing: border-box;
+	margin: 0;
+	outline: none;
+	padding: 0;
+	-webkit-tap-highlight-color: transparent;
+	-webkit-touch-callout: none;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	user-select: none;
+}
+
+html {
+	background-color: white;
+	color: white;
+	font-family: 'Jost', sans-serif;
+	font-size: 16px;
+	height: 100vh;
+	overflow: hidden;
+	width: 100vw;
+}
+
+.ol-overlaycontainer-stopevent {
+	display: none !important;
+}
