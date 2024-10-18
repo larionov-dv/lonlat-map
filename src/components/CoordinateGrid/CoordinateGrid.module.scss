@@ -1,0 +1,15 @@
+@import '../../styles/variables';
+
+.coordinateGrid {
+	height: calc(100vh - #{$ruler-width * 2});
+	left: $ruler-width;
+	pointer-events: none;
+	position: absolute;
+	top: $ruler-width;
+	width: calc(100vw - #{$ruler-width * 2});
+
+	line {
+		stroke: blue;
+		stroke-width: 0.5;
+	}
+}

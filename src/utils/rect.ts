@@ -16,7 +16,7 @@ export class Rect {
 		return new Rect(this.left, this.top, this.right, this.bottom);
 	}
 
-	// increases the rectangle so that all its dimensions were integers
+	// increases the rectangle so that all its dimensions become integers
 	inflateToTheNearestIntegers() {
 		this.left = Math.floor(this.left);
 		this.top = Math.ceil(this.top);

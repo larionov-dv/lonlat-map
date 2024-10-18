@@ -1,4 +1,4 @@
-$ruler-width: 20px;
+@import '../../styles/variables';
 
 .earthMap {
 	height: 100vh;
@@ -104,20 +104,6 @@ $ruler-width: 20px;
 			right: -1px;
 			transform: rotate(45deg);
 			transform-origin: top right;
-		}
-	}
-
-	&__overlay {
-		height: calc(100vh - #{$ruler-width * 2});
-		left: $ruler-width;
-		pointer-events: none;
-		position: absolute;
-		top: $ruler-width;
-		width: calc(100vw - #{$ruler-width * 2});
-
-		line {
-			stroke: blue;
-			stroke-width: 0.5;
 		}
 	}
 
