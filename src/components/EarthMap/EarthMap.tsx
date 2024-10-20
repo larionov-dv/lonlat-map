@@ -90,7 +90,8 @@ const EarthMap: FC<Props> = ({id, center, zoom}) => {
 			<Ruler items={parallels} type={RulerType.LEFT}/>
 			<Ruler items={parallels} type={RulerType.RIGHT}/>
 			{map !== null && <CoordinateGrid map={map} rect={rect} meridians={meridians} parallels={parallels} showMajorParallels={true}/>}
-			<div id={MOUSE_POSITION_CONTROL_ID} className={cls.earthMap__mousePosition}></div>
+			<div id={MOUSE_POSITION_CONTROL_ID} className={[cls.earthMap__textBlock, cls.earthMap__mousePosition].join(' ')}></div>
+			<div className={[cls.earthMap__textBlock, cls.earthMap__osmContributors].join(' ')}>© <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors.</div>
 		</div>
 	);
 };
