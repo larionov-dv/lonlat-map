@@ -9,6 +9,7 @@ import {ls} from "../../utils/ls";
 import {createMap} from "../../utils/map";
 import CoordinateGrid, {LineDef} from "../CoordinateGrid/CoordinateGrid";
 import {buildLinesLists} from "../../utils/buildLinesLists";
+import Ruler, {RulerType} from "../Ruler/Ruler";
 
 interface Props {
 	id: string;
@@ -79,18 +80,10 @@ const EarthMap: FC<Props> = ({id, center, zoom}) => {
 	return (
 		<div className={cls.earthMap}>
 			<div id={id} className={cls.earthMap__map}></div>
-			<div className={cls.earthMap__ruler + ' ' + cls.earthMap__rulerTop}>
-				{meridians.map(line => <span key={line.pos} style={{left: line.pos}}>{line.html}</span>)}
-			</div>
-			<div className={cls.earthMap__ruler + ' ' + cls.earthMap__rulerBottom}>
-				{meridians.map(line => <span key={line.pos} style={{left: line.pos}}>{line.html}</span>)}
-			</div>
-			<div className={cls.earthMap__ruler + ' ' + cls.earthMap__rulerLeft}>
-				{parallels.map(line => <span key={line.pos} style={{top: line.pos}}>{line.html}</span>)}
-			</div>
-			<div className={cls.earthMap__ruler + ' ' + cls.earthMap__rulerRight}>
-				{parallels.map(line => <span key={line.pos} style={{top: line.pos}}>{line.html}</span>)}
-			</div>
+			<Ruler items={meridians} type={RulerType.TOP}/>
+			<Ruler items={meridians} type={RulerType.BOTTOM}/>
+			<Ruler items={parallels} type={RulerType.LEFT}/>
+			<Ruler items={parallels} type={RulerType.RIGHT}/>
 			{map !== null && <CoordinateGrid map={map} rect={rect} meridians={meridians} parallels={parallels} showMajorParallels={true}/>}
 			<div id={MOUSE_POSITION_CONTROL_ID} className={cls.earthMap__mousePosition}></div>
 		</div>
