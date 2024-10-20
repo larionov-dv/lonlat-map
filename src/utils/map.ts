@@ -12,12 +12,14 @@ export const projection: Projection = new Projection({code: 'EPSG:3857'});
 // add some custom methods to the Map object to make the coding more convenient
 function getPixelXFromLongitude(longitude: number): number {
 	// @ts-ignore
-	return this.getPixelFromCoordinate(fromLonLat([longitude, 0], projection))[0];
+	const pixel: Pixel = this.getPixelFromCoordinate(fromLonLat([longitude, 0], projection));
+	return pixel === null ? 0 : pixel[0];
 }
 
 function getPixelYFromLatitude(latitude: number): number {
 	// @ts-ignore
-	return this.getPixelFromCoordinate(fromLonLat([0, latitude], projection))[1];
+	const pixel: Pixel = this.getPixelFromCoordinate(fromLonLat([0, latitude], projection));
+	return pixel === null ? 0 : pixel[1];
 }
 
 declare module "ol" {
@@ -35,6 +37,7 @@ export const createMap = (
 	id: string,							// an ID of the element, in which the map will be embedded
 	center: number[],					// geodetic coordinates of the initial center for the view
 	zoom: number,						// an initial zoom value
+	postrender: () => void,				// a function to invoke when the map renders for the first time
 	mousePosCtrlId: string|null = null	// an ID of the element for displaying coordinates under the mouse cursor
 ): Map => {
 
@@ -56,7 +59,7 @@ export const createMap = (
 		MAX_LONGITUDE = 210,	// the value is greater than 180° so that the Pacific ocean can be displayed as a whole
 		MAX_LATITUDE = 83;		// at large latitudes, the Mercator projection is practically unusable, because the linear scale becomes infinitely large at the poles
 
-	return new Map({
+	const map: Map = new Map({
 		controls: mousePositionControl === null ? defaults() : defaults().extend([mousePositionControl]),
 		layers: [
 			new TileLayer({
@@ -72,5 +75,9 @@ export const createMap = (
 			zoom
 		})
 	});
+
+	map.once('postrender', postrender);
+
+	return map;
 
 };

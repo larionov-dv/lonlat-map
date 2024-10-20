@@ -24,6 +24,11 @@ const EarthMap: FC<Props> = ({id, center, zoom}) => {
 	const [meridians, setMeridians] = useState<LineDef[]>([]);	// the definitions of meridians
 	const [parallels, setParallels] = useState<LineDef[]>([]);	// the definitions of parallels
 
+	/*	The Map.getPixelFromCoordinate() method returns null until the map is initialized. But this method
+		is needed to calculate the grid step. So we set 'initialized' to true in the map's 'postrender'
+		event to know when the Map.getPixelFromCoordinate() becomes available. */
+	const [initialized, setInitialized] = useState<boolean>(false);
+
 	const MOUSE_POSITION_CONTROL_ID: string = 'mouse_position';
 
 	// update the map extent when the map is moving or the scale is changing
@@ -44,7 +49,7 @@ const EarthMap: FC<Props> = ({id, center, zoom}) => {
 	useEffect(() => {
 		// create a map if it hasn't been created yet
 		if (map === null) {
-			setMap(createMap(id, center, zoom, MOUSE_POSITION_CONTROL_ID));
+			setMap(createMap(id, center, zoom, () => setInitialized(true), MOUSE_POSITION_CONTROL_ID));
 		}
 	});
 
@@ -75,7 +80,7 @@ const EarthMap: FC<Props> = ({id, center, zoom}) => {
 			}
 			ls.zoom = view.getZoom();
 		}
-	}, [rect]);
+	}, [rect, initialized]);
 
 	return (
 		<div className={cls.earthMap}>
