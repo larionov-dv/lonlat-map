@@ -1,0 +1,57 @@
+@import '../../../styles/variables';
+
+.popup {
+
+	background-color: white;
+	border: $ruler-border;
+	box-shadow: 0 0 3px gray;
+	opacity: 0;
+	pointer-events: none;
+	padding: 16px;
+	position: absolute;
+	right: $ruler-width + 10px;
+	transform: scale(0);
+	transform-origin: right top;
+	transition: all 0.3s ease-in-out;
+	width: 400px;
+
+	&__visible {
+		opacity: 1;
+		pointer-events: initial;
+		transform: scale(1);
+	}
+
+	&__close {
+		cursor: pointer;
+		height: 16px;
+		opacity: 0.5;
+		position: absolute;
+		right: 8px;
+		top: 8px;
+		width: 16px;
+
+		&:hover {
+			opacity: 1;
+		}
+
+		&::before, &::after {
+			background-color: black;
+			content: '';
+			height: 16px;
+			left: 7.5px;
+			position: absolute;
+			top: 0;
+			transform-origin: center center;
+			width: 1px;
+		}
+
+		&::before {
+			transform: rotate(45deg);
+		}
+
+		&::after {
+			transform: rotate(-45deg);
+		}
+	}
+
+}

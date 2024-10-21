@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap');
 @import 'ol/ol.css';
+@import 'variables';
 
 * {
 	box-sizing: border-box;
@@ -25,4 +26,20 @@ html {
 
 .ol-overlaycontainer-stopevent {
 	display: none !important;
+}
+
+#root, #root > div {
+	height: 100vh;
+	overflow: hidden;
+	width: 100vw;
+}
+
+#root > div {
+	position: relative;
+}
+
+#buttonContainer {
+	position: absolute;
+	right: $ruler-width + 10px;
+	transition: top 0.3s ease-in-out;
 }

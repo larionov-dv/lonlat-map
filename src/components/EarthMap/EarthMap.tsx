@@ -4,20 +4,25 @@ import {Map, View} from "ol";
 import {toLonLat} from "ol/proj";
 import {Rect} from "../../utils/rect";
 import {getBottomLeft, getTopRight} from "ol/extent";
-import {Coordinate} from "ol/coordinate";
+import {Coordinate, createStringXY} from "ol/coordinate";
 import {ls} from "../../utils/ls";
-import {createMap} from "../../utils/map";
+import {createMap, getMousePositionControl} from "../../utils/map";
 import CoordinateGrid, {LineDef} from "../CoordinateGrid/CoordinateGrid";
 import {buildLinesLists} from "../../utils/buildLinesLists";
 import Ruler, {RulerType} from "../Ruler/Ruler";
+import {MousePosition} from "ol/control";
+import {formatLonLat} from "../../utils/formatLonLat";
 
 interface Props {
 	id: string;
 	center: number[];
 	zoom: number;
+	showCoordinates?: boolean;		// show coordinates under the mouse cursor
+	formatCoordinates?: boolean;	// true - show formatted coordinates; false - show just a real number of degrees
+	showMajorParallels?: boolean;	// show the polar circles and the tropics
 }
 
-const EarthMap: FC<Props> = ({id, center, zoom}) => {
+const EarthMap: FC<Props> = ({id, center, zoom, showCoordinates, formatCoordinates, showMajorParallels}) => {
 
 	const [map, setMap] = useState<Map|null>(null);
 	const [rect, setRect] = useState<Rect>(new Rect());			// an extent of the map
@@ -46,10 +51,22 @@ const EarthMap: FC<Props> = ({id, center, zoom}) => {
 		}
 	};
 
+	const formatCoordCallback = (coord: Coordinate | undefined): string => coord === undefined ? '' : formatLonLat(coord);
+
+	useEffect(() => {
+		if (map !== null) {
+			const mpControl: MousePosition|null = getMousePositionControl(map);
+			if (mpControl !== null) {
+				// change the coordinates format
+				mpControl.setCoordinateFormat(formatCoordinates ? formatCoordCallback : createStringXY(6));
+			}
+		}
+	}, [formatCoordinates]);
+
 	useEffect(() => {
 		// create a map if it hasn't been created yet
 		if (map === null) {
-			setMap(createMap(id, center, zoom, () => setInitialized(true), MOUSE_POSITION_CONTROL_ID));
+			setMap(createMap(id, center, zoom, () => setInitialized(true), MOUSE_POSITION_CONTROL_ID, formatCoordinates ? formatCoordCallback : createStringXY(6)));
 		}
 	});
 
@@ -89,8 +106,8 @@ const EarthMap: FC<Props> = ({id, center, zoom}) => {
 			<Ruler items={meridians} type={RulerType.BOTTOM}/>
 			<Ruler items={parallels} type={RulerType.LEFT}/>
 			<Ruler items={parallels} type={RulerType.RIGHT}/>
-			{map !== null && <CoordinateGrid map={map} rect={rect} meridians={meridians} parallels={parallels} showMajorParallels={true}/>}
-			<div id={MOUSE_POSITION_CONTROL_ID} className={[cls.earthMap__textBlock, cls.earthMap__mousePosition].join(' ')}></div>
+			{map !== null && <CoordinateGrid map={map} rect={rect} meridians={meridians} parallels={parallels} showMajorParallels={showMajorParallels}/>}
+			<div id={MOUSE_POSITION_CONTROL_ID} className={[cls.earthMap__textBlock, cls.earthMap__mousePosition].join(' ')} style={{display: showCoordinates !== false ? 'block' : 'none'}}></div>
 			<div className={[cls.earthMap__textBlock, cls.earthMap__osmContributors].join(' ')}>© <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors.</div>
 		</div>
 	);

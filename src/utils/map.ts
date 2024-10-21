@@ -1,6 +1,6 @@
 import {fromLonLat, Projection} from "ol/proj";
-import {defaults, MousePosition} from "ol/control";
-import {createStringXY} from "ol/coordinate";
+import {Control, defaults, MousePosition} from "ol/control";
+import {CoordinateFormat, createStringXY} from "ol/coordinate";
 import cls from "../components/EarthMap/EarthMap.module.scss";
 import {Map, View} from "ol";
 import TileLayer from "ol/layer/Tile";
@@ -38,7 +38,8 @@ export const createMap = (
 	center: number[],					// geodetic coordinates of the initial center for the view
 	zoom: number,						// an initial zoom value
 	postrender: () => void,				// a function to invoke when the map renders for the first time
-	mousePosCtrlId: string|null = null	// an ID of the element for displaying coordinates under the mouse cursor
+	mousePosCtrlId: string|null = null,	// an ID of the element for displaying coordinates under the mouse cursor
+	coordFmtCallback?: CoordinateFormat	// a function to format the coordinates under the mouse cursor
 ): Map => {
 
 	let mousePositionControl: MousePosition|null = null;
@@ -47,11 +48,11 @@ export const createMap = (
 		const mouse_position: HTMLElement|null = document.getElementById('mouse_position');
 		if (mouse_position !== null) {
 			mousePositionControl = new MousePosition({
-			coordinateFormat: createStringXY(6),
-			projection: 'EPSG:4326',
-			className: cls.earthMap__mousePositionLabel,
-			target: mouse_position
-		});
+				coordinateFormat: coordFmtCallback === undefined ? createStringXY(6) : coordFmtCallback,
+				projection: 'EPSG:4326',
+				className: cls.earthMap__mousePositionLabel,
+				target: mouse_position
+			});
 		}
 	}
 
@@ -79,5 +80,19 @@ export const createMap = (
 	map.once('postrender', postrender);
 
 	return map;
+
+};
+
+export const getMousePositionControl = (map: Map): MousePosition|null => {
+
+	const controls: Control[] = map.getControls().getArray();
+
+	for (let i = 0, l = controls.length; i < l; i++) {
+		if (controls[i].constructor.name === 'MousePosition') {
+			return controls[i] as MousePosition;
+		}
+	}
+
+	return null;
 
 };

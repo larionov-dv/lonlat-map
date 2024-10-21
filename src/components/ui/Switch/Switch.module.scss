@@ -1,0 +1,69 @@
+@import '../../../styles/mixins';
+
+$switch-height: 18px;
+$switch-border-width: 2px;
+$knob-width: 30px;
+
+.switch {
+
+	@include flexbox(space-between, center);
+	height: $switch-height;
+	margin-top: 16px;
+
+	&__knob {
+		border: solid $switch-border-width black;
+		border-radius: $switch-height / 2;
+		cursor: pointer;
+		height: $switch-height;
+		overflow: hidden;
+		position: relative;
+		width: $knob-width;
+	}
+
+	&__slider {
+		@include flexbox;
+		height: $switch-height - $switch-border-width * 2;
+		left: 0;
+		pointer-events: none;
+		position: absolute;
+		top: 0;
+		transition: left 0.3s ease-in-out;
+		width: ($knob-width - $switch-border-width * 2) * 2;
+
+		& > div {
+			border-radius: $switch-height - $switch-border-width * 2;
+			color: black;
+			font-size: 12px;
+			height: $switch-height;
+			text-align: center;
+			width: $knob-width - $switch-border-width * 2;
+		}
+
+		& > div + div {
+			background-color: black;
+			color: white;
+		}
+	}
+
+	&__on &__slider {
+		left: -$knob-width + $switch-border-width * 2;
+	}
+
+	&__disabled {
+		cursor: not-allowed;
+		opacity: 0.5;
+
+		& * {
+			pointer-events: none;
+		}
+	}
+
+	&__text {
+		color: black;
+		height: $switch-height;
+		line-height: $switch-height;
+		white-space: nowrap;
+		width: calc(100% - #{$knob-width} - 12px);
+	}
+
+}
