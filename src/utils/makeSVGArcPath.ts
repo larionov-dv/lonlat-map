@@ -5,16 +5,20 @@ import {Spherical} from "./linear_math/Spherical";
 import {Matrix} from "./linear_math/Matrix";
 import {Vector2D} from "./linear_math/Vector2D";
 import {Rect} from "./rect";
+import {viewport} from "./viewport";
+import {RULER_WIDTH} from "./global";
 
 interface SVGArcData {
 	from: number[],				// a pixel coordinate of the start point of the arc
 	to: number[],				// a pixel coordinate of the end point of the arc
 	svgPath: string;			// an SVG path for the main arc
-	svgPath2?: string;			// an SVG path for the additional arc
-	bounds: Rect;				// a bounding rectangle of the main arc
-	bounds2?: Rect;				// a bounding rectangle of the additional arc
+	svgPathL?: string;			// an SVG path for the additional arc
+	svgPathR?: string;			// an SVG path for the additional arc
 	labelPosition: number[];	// a position of the distance measurement label
 	_360deg: number;			// a number of pixels per 360 degrees
+	mainArc: boolean;			// a main arc is visible
+	additionalArcLeft: boolean;	// an additional arc on the left is visible
+	additionalArcRight: boolean;// an additional arc on the right is visible
 }
 
 // turns an array of points to an SVG path string
@@ -39,25 +43,12 @@ const calculateLabelPosition = (p0: number[], p1: number[]): number[] => {
 
 };
 
-// checks whether the points in an array are arranged in descending order of X coordinate
-const isXDescending = (points: number[][]): boolean => {
+interface MapPoint {
+	geodetic: number[];
+	pixel: number[];
+}
 
-	const
-		length: number = points.length,
-		first: number = points[0][0];
-	let
-		current: number = 1,
-		descending: boolean = points[current++][0] < first;
-
-	while (!descending && current < length && first === points[current][0]) {
-		descending = points[current++][0] < first;
-	}
-
-	return descending;
-
-};
-
-// calculates SVG paths and other data needed to correctly display the arc
+// calculates SVG paths and other data needed to correctly display the arcs
 export const makeSVGArcPath = (map: Map, from: number[], to: number[], segments: number = 2): SVGArcData => {
 
 	if (segments < 2) segments = 2; // because the arc must have a center point
@@ -74,95 +65,85 @@ export const makeSVGArcPath = (map: Map, from: number[], to: number[], segments:
 		// intermediate vectors
 		vectors: Vector[] = [],
 		// an index of the middle segment of the arc
-		middleSegment: number = Math.floor(segments / 2),
+		middleSegment: number = Math.ceil(segments / 2),
 		// a bounding rectangle of the arc
 		bounds: Rect = new Rect();
 	let
 		// a position of the distance label
-		labelPosition: number[] = to.slice(),
-		// the arc is between 150°E and 150°W and must be displayed twice on the map
-		showAdditionalArc: boolean = false;
+		labelPosition: number[] = to.slice();
 
 	// calculate the intermediate vectors
 	for (let i = 0; i <= segments; i++) {
 		vectors.push(begin.multiply(new Matrix(axis, step * i)));
 	}
 
-	// calculate geodetic coordinates of the arc
-	const coordinates: number[][] = vectors.map((v: Vector): number[] => {
+	// calculate geodetic and screen coordinates of points the arc
+	let points: MapPoint[] = vectors.map((v: Vector): MapPoint => {
 		const
 			spherical: Spherical = v.toSpherical(),
 			coordinate: number[] = [Radians.from(spherical.phi), Radians.from(spherical.theta)];
-		if (Math.abs(coordinate[0]) >= 150.0) {
-			showAdditionalArc = true; // if the arc has segments beyond the 150th meridian, the arc must be displayed twice
-		}
-		return coordinate;
+		return {geodetic: coordinate, pixel: map.getPixelXYFromLonLat(coordinate)};
 	});
 
-	const
-		// an X position of the right 180th meridian
-		_180degXR: number = map.getPixelXFromLongitude(180.0),
-		// a number of pixels in 360 degrees at the current map scale
-		_360degToPixels: number = showAdditionalArc ? (_180degXR - map.getPixelXFromLongitude(0.0)) * 2.0 : 0.0,
-		// an X position of the left 180th meridian
-		_180degXL: number = _180degXR - _360degToPixels;
+	// a number of pixels in 360 degrees at the current map scale
+	const _360degToPixels: number = (map.getPixelXFromLongitude(180.0) - map.getPixelXFromLongitude(0.0)) * 2.0;
 
-	// calculate pixels of the arc
-	let points: number[][] = coordinates.map((coordinate: number[]): number[] => map.getPixelXYFromLonLat(coordinate));
+	// if the arc crosses the 180th meridian, the part of the arc must be shifted by this value
+	let shift: number = 0.0;
 
-	// the first and the last point coordinates
-	const
-		firstPoint: number[] = points[0],
-		lastPoint: number[] = points[points.length - 1];
-
-	// rearrange the points of the arc so that their X coordinates ascend from left to right
-	if (isXDescending(points)) {
-		points.reverse();
-	}
-
-	// the arc may have a break on the 180th meridian; to eliminate the break, add 360° to the X coordinate of the point
-	let add360: boolean = false;
-
-	// some additional operations on the arc
-	points = points.map((point: number[], index: number): number[] => {
+	points = points.map((point: MapPoint, index: number): MapPoint => {
 		// the previous point
-		const prev: number[]|null = index === 0 ? null : points[index - 1];
-		// if there are two arcs, the first one goes to the left; the second one will be shown on the right
-		if (showAdditionalArc) {
-			point[0] -= _360degToPixels;
+		const prev: MapPoint|null = index === 0 ? null : points[index - 1];
+		if (prev !== null) {
+			// detect the arc break and set the shift for the points following after the break
+			if (shift === 0.0 && Math.abs(point.geodetic[0] - prev.geodetic[0]) > 90.0) {
+				if (prev.geodetic[0] > point.geodetic[0]) {
+					shift = _360degToPixels;
+				} else {
+					shift = -_360degToPixels;
+				}
+			}
 		}
-		// if the arc break is detected, the current point and all subsequent points must be shifted 360° to the right
-		if (prev !== null && prev[0] > point[0]) {
-			add360 = true;
-		}
-		if (add360) {
-			point[0] += _360degToPixels;
-		}
+		// if the arc break is detected, shift the current point 360° to the left or to the right depending on the arc direction
+		point.pixel[0] += shift;
 		// find the middle segment of the arc to show the label next to it
 		if (index === middleSegment) {
-			labelPosition = calculateLabelPosition(point, map.getPixelXYFromLonLat(coordinates[index + 1]));
+			// prev is never null here, so just use @ts-ignore
+			// @ts-ignore
+			labelPosition = calculateLabelPosition(prev.pixel, point.pixel);
 		}
 		// calculate the bounding rectangle of the arc
 		if (index === 0) {
-			bounds.setZeroSize(point[0], point[1]);
+			bounds.setZeroSize(point.pixel[0], point.pixel[1]);
 		} else {
-			bounds.extend(point[0], point[1]);
+			bounds.extend(point.pixel[0], point.pixel[1]);
 		}
 		return point;
 	});
 
-	// an additional arc (displayed if the main arc is interrupted at the edge of the map)
-	const points2: number[][] = showAdditionalArc ? points.map((point: number[]) => [point[0] + _360degToPixels, point[1]]) : [];
+	// a bounding rectangle of the map
+	const mapRect: Rect = new Rect(0, 0, viewport.width - RULER_WIDTH * 2, viewport.height - RULER_WIDTH * 2);
+
+	const
+		// show the additional arc on the left
+		leftArc: boolean = mapRect.intersects(bounds.offset(-_360degToPixels, 0.0)),
+		// show the additional arc on the right
+		rightArc: boolean = mapRect.intersects(bounds.offset(_360degToPixels, 0.0));
+
+	// adds x to pixels X coordinate
+	const addX = (p: number[], x: number): number[] => [p[0] + x, p[1]];
 
 	return {
-		from: firstPoint,
-		to: lastPoint,
-		svgPath: makePathFromPoint(points),
-		svgPath2: showAdditionalArc ? makePathFromPoint(points2) : undefined,
-		bounds: bounds,
-		bounds2: showAdditionalArc ? bounds.offset(_360degToPixels, 0.0) : undefined,
+		from: points[0].pixel,
+		to: points[points.length - 1].pixel,
+		svgPath: makePathFromPoint(points.map(p => p.pixel)),
+		svgPathL: leftArc ? makePathFromPoint(points.map(p => addX(p.pixel, -_360degToPixels))) : undefined,
+		svgPathR: rightArc ? makePathFromPoint(points.map(p => addX(p.pixel, _360degToPixels))) : undefined,
 		labelPosition: labelPosition,
-		_360deg: _360degToPixels
+		_360deg: _360degToPixels,
+		mainArc: mapRect.intersects(bounds),
+		additionalArcLeft: leftArc,
+		additionalArcRight: rightArc
 	};
 
 };

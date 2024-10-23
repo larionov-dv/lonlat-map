@@ -38,7 +38,6 @@ const DistanceMeasurement: FC<Props> = ({map, rect, state, from, to, useMiles, o
 
 	// declare some constants to make the code more concise
 	const
-		twoArcs: boolean = cached.svgPath2 !== undefined,					// two arcs must be drawn
 		onePoint: boolean = state > MeasurementState.MS_STARTED,			// the first point must be drawn
 		twoPoints: boolean = state === MeasurementState.MS_LAST_POINT_SET;	// the last point must be drawn
 
@@ -76,9 +75,9 @@ const DistanceMeasurement: FC<Props> = ({map, rect, state, from, to, useMiles, o
 	const size = {x: viewport.width - RULER_WIDTH * 2, y: viewport.height - RULER_WIDTH * 2};
 
 	// makes CSS properties for different elements of the component
-	const css = (p: number[], move360: boolean = false, limit: boolean = false): CSSProperties => {
+	const css = (p: number[], moveX: number = 0.0, limit: boolean = false): CSSProperties => {
 		let
-			left: number = p[0] + (move360 ? cached._360deg : 0.0),
+			left: number = p[0] + moveX,
 			top: number = p[1];
 		if (limit) {
 			const MX: number = 30, MY: number = 10;
@@ -87,11 +86,6 @@ const DistanceMeasurement: FC<Props> = ({map, rect, state, from, to, useMiles, o
 		}
 		return {left, top};
 	};
-
-	const
-		boundRect: Rect = new Rect(0, 0, size.x, size.y),
-		visible: boolean = boundRect.intersects(cached.bounds),										// the main arc is visible
-		visible2: boolean = cached.bounds2 !== undefined && boundRect.intersects(cached.bounds2);	// the additional arc is visible
 
 	return (
 		<div className={cls.distanceMeasurement}>
@@ -107,8 +101,8 @@ const DistanceMeasurement: FC<Props> = ({map, rect, state, from, to, useMiles, o
 					<path d={cached.svgPath}/>
 				</svg>
 			}
-			{twoPoints && twoArcs &&
-				// the additional arc (shown if the main arc begins west of the 180th meridian and ends east of it)
+			{twoPoints && cached.svgPathL !== undefined &&
+				// the additional arc on the left
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
 					width={size.x}
@@ -116,32 +110,56 @@ const DistanceMeasurement: FC<Props> = ({map, rect, state, from, to, useMiles, o
 					viewBox={`0 0 ${size.x} ${size.y}`}
 					className={cls.distanceMeasurement__arc}
 				>
-					<path d={cached.svgPath2}/>
+					<path d={cached.svgPathL}/>
 				</svg>
 			}
-			{onePoint && visible &&
+			{twoPoints && cached.svgPathR !== undefined &&
+				// the additional arc on the right
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					width={size.x}
+					height={size.y}
+					viewBox={`0 0 ${size.x} ${size.y}`}
+					className={cls.distanceMeasurement__arc}
+				>
+					<path d={cached.svgPathR}/>
+				</svg>
+			}
+			{onePoint &&
 				// the first point
 				<div className={cls.distanceMeasurement__point + ' first'} style={css(cached.from)} onMouseDown={mouse.down}></div>
 			}
-			{twoPoints && visible &&
+			{twoPoints &&
 				// the last point
 				<div className={cls.distanceMeasurement__point} style={css(cached.to)} onMouseDown={mouse.down}></div>
 			}
-			{onePoint && twoArcs && visible2 &&
-				// a duplicate of the first point (for the secondary arc)
-				<div className={cls.distanceMeasurement__point + ' first'} style={css(cached.from, true)} onMouseDown={mouse.down}></div>
+			{onePoint && cached.svgPathL !== undefined &&
+				// a duplicate of the first point for the left arc
+				<div className={cls.distanceMeasurement__point + ' first'} style={css(cached.from, -cached._360deg)} onMouseDown={mouse.down}></div>
 			}
-			{twoPoints && twoArcs && visible2 &&
-				// a duplicate of the last point (for the secondary arc)
-				<div className={cls.distanceMeasurement__point} style={css(cached.to, true)} onMouseDown={mouse.down}></div>
+			{twoPoints && cached.svgPathL !== undefined &&
+				// a duplicate of the last point for the left arc
+				<div className={cls.distanceMeasurement__point} style={css(cached.to, -cached._360deg)} onMouseDown={mouse.down}></div>
 			}
-			{twoPoints && visible &&
+			{onePoint && cached.svgPathR !== undefined &&
+				// a duplicate of the first point for the right arc
+				<div className={cls.distanceMeasurement__point + ' first'} style={css(cached.from, cached._360deg)} onMouseDown={mouse.down}></div>
+			}
+			{twoPoints && cached.svgPathR !== undefined &&
+				// a duplicate of the last point for the right arc
+				<div className={cls.distanceMeasurement__point} style={css(cached.to, cached._360deg)} onMouseDown={mouse.down}></div>
+			}
+			{twoPoints && cached.mainArc &&
 				// a distance label
-				<div className={cls.distanceMeasurement__distance} style={css(cached.labelPosition, false, true)}>{cached.distance}</div>
+				<div className={cls.distanceMeasurement__distance} style={css(cached.labelPosition, 0.0, true)}>{cached.distance}</div>
 			}
-			{twoPoints && twoArcs && visible2 &&
-				// a duplicate of the distance label (for the secondary arc)
-				<div className={cls.distanceMeasurement__distance} style={css(cached.labelPosition, true, true)}>{cached.distance}</div>
+			{twoPoints && cached.svgPathL !== undefined &&
+				// a duplicate of the distance label for the left arc
+				<div className={cls.distanceMeasurement__distance} style={css(cached.labelPosition, -cached._360deg, true)}>{cached.distance}</div>
+			}
+			{twoPoints && cached.svgPathR !== undefined &&
+				// a duplicate of the distance label for the right arc
+				<div className={cls.distanceMeasurement__distance} style={css(cached.labelPosition, cached._360deg, true)}>{cached.distance}</div>
 			}
 		</div>
 	);
