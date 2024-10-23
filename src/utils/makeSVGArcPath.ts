@@ -39,8 +39,26 @@ const calculateLabelPosition = (p0: number[], p1: number[]): number[] => {
 
 };
 
+// checks whether the points in an array are arranged in descending order of X coordinate
+const isXDescending = (points: number[][]): boolean => {
+
+	const
+		length: number = points.length,
+		first: number = points[0][0];
+	let
+		current: number = 1,
+		descending: boolean = points[current++][0] < first;
+
+	while (!descending && current < length && first === points[current][0]) {
+		descending = points[current++][0] < first;
+	}
+
+	return descending;
+
+};
+
 // calculates SVG paths and other data needed to correctly display the arc
-export const makeSVGArcPath = (map: Map, from: number[], to: number[], segments: number = 1): SVGArcData => {
+export const makeSVGArcPath = (map: Map, from: number[], to: number[], segments: number = 2): SVGArcData => {
 
 	if (segments < 2) segments = 2; // because the arc must have a center point
 
@@ -55,7 +73,7 @@ export const makeSVGArcPath = (map: Map, from: number[], to: number[], segments:
 		step: number = begin.angleBetween(end) / segments,
 		// intermediate vectors
 		vectors: Vector[] = [],
-		// a number of the middle segment of the arc
+		// an index of the middle segment of the arc
 		middleSegment: number = Math.floor(segments / 2),
 		// a bounding rectangle of the arc
 		bounds: Rect = new Rect();
@@ -63,7 +81,7 @@ export const makeSVGArcPath = (map: Map, from: number[], to: number[], segments:
 		// a position of the distance label
 		labelPosition: number[] = to.slice(),
 		// the arc is between 150°E and 150°W and must be displayed twice on the map
-		closeTo180: boolean = false;
+		showAdditionalArc: boolean = false;
 
 	// calculate the intermediate vectors
 	for (let i = 0; i <= segments; i++) {
@@ -76,23 +94,55 @@ export const makeSVGArcPath = (map: Map, from: number[], to: number[], segments:
 			spherical: Spherical = v.toSpherical(),
 			coordinate: number[] = [Radians.from(spherical.phi), Radians.from(spherical.theta)];
 		if (Math.abs(coordinate[0]) >= 150.0) {
-			closeTo180 = true; // if the arc has segments beyond the 150th meridian, the arc must be displayed twice
+			showAdditionalArc = true; // if the arc has segments beyond the 150th meridian, the arc must be displayed twice
 		}
 		return coordinate;
 	});
 
-	// a number of pixels in 360 degrees at the current map scale
-	const _360degToPixels: number = closeTo180 ? (map.getPixelXFromLongitude(180.0) - map.getPixelXFromLongitude(0.0)) * 2.0 : 0.0;
+	const
+		// an X position of the right 180th meridian
+		_180degXR: number = map.getPixelXFromLongitude(180.0),
+		// a number of pixels in 360 degrees at the current map scale
+		_360degToPixels: number = showAdditionalArc ? (_180degXR - map.getPixelXFromLongitude(0.0)) * 2.0 : 0.0,
+		// an X position of the left 180th meridian
+		_180degXL: number = _180degXR - _360degToPixels;
 
 	// calculate pixels of the arc
-	const points: number[][] = coordinates.map((coordinate: number[], index: number): number[] => {
-		const point: number[] = map.getPixelXYFromLonLat(coordinate);
-		if (closeTo180 && coordinate[0] > 0.0) {
+	let points: number[][] = coordinates.map((coordinate: number[]): number[] => map.getPixelXYFromLonLat(coordinate));
+
+	// the first and the last point coordinates
+	const
+		firstPoint: number[] = points[0],
+		lastPoint: number[] = points[points.length - 1];
+
+	// rearrange the points of the arc so that their X coordinates ascend from left to right
+	if (isXDescending(points)) {
+		points.reverse();
+	}
+
+	// the arc may have a break on the 180th meridian; to eliminate the break, add 360° to the X coordinate of the point
+	let add360: boolean = false;
+
+	// some additional operations on the arc
+	points = points.map((point: number[], index: number): number[] => {
+		// the previous point
+		const prev: number[]|null = index === 0 ? null : points[index - 1];
+		// if there are two arcs, the first one goes to the left; the second one will be shown on the right
+		if (showAdditionalArc) {
 			point[0] -= _360degToPixels;
 		}
+		// if the arc break is detected, the current point and all subsequent points must be shifted 360° to the right
+		if (prev !== null && prev[0] > point[0]) {
+			add360 = true;
+		}
+		if (add360) {
+			point[0] += _360degToPixels;
+		}
+		// find the middle segment of the arc to show the label next to it
 		if (index === middleSegment) {
 			labelPosition = calculateLabelPosition(point, map.getPixelXYFromLonLat(coordinates[index + 1]));
 		}
+		// calculate the bounding rectangle of the arc
 		if (index === 0) {
 			bounds.setZeroSize(point[0], point[1]);
 		} else {
@@ -102,15 +152,15 @@ export const makeSVGArcPath = (map: Map, from: number[], to: number[], segments:
 	});
 
 	// an additional arc (displayed if the main arc is interrupted at the edge of the map)
-	const points2: number[][] = closeTo180 ? points.map((point: number[]) => [point[0] + _360degToPixels, point[1]]) : [];
+	const points2: number[][] = showAdditionalArc ? points.map((point: number[]) => [point[0] + _360degToPixels, point[1]]) : [];
 
 	return {
-		from: points[0],
-		to: points[points.length - 1],
+		from: firstPoint,
+		to: lastPoint,
 		svgPath: makePathFromPoint(points),
-		svgPath2: closeTo180 ? makePathFromPoint(points2) : undefined,
+		svgPath2: showAdditionalArc ? makePathFromPoint(points2) : undefined,
 		bounds: bounds,
-		bounds2: closeTo180 ? bounds.offset(_360degToPixels, 0.0) : undefined,
+		bounds2: showAdditionalArc ? bounds.offset(_360degToPixels, 0.0) : undefined,
 		labelPosition: labelPosition,
 		_360deg: _360degToPixels
 	};
