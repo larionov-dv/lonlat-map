@@ -113,7 +113,7 @@ const EarthMap: FC<Props> = ({id, center, zoom, showCoordinates, formatCoordinat
 	}, [map]);
 
 	useEffect(() => {
-		if (map !== null) {
+		if (map !== null && initialized) {
 			// build a list of parallels and meridians
 			const {meridians, parallels} = buildLinesLists(map, rect);
 			setMeridians(meridians);
