@@ -25,7 +25,7 @@ $button-size: 36px;
 		}
 	}
 
-	&:active {
+	&:active, &__pressed {
 		background-color: black;
 		border-color: white;
 

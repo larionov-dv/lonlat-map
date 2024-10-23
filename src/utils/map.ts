@@ -22,15 +22,23 @@ function getPixelYFromLatitude(latitude: number): number {
 	return pixel === null ? 0 : pixel[1];
 }
 
+function getPixelXYFromLonLat(lonLat: number[]): number[] {
+	// @ts-ignore
+	const pixel: Pixel = this.getPixelFromCoordinate(fromLonLat([lonLat[0], lonLat[1]], projection));
+	return pixel === null ? [0.0, 0.0] : pixel;
+}
+
 declare module "ol" {
 	interface Map {
 		getPixelXFromLongitude(longitude: number): number;
 		getPixelYFromLatitude(latitude: number): number;
+		getPixelXYFromLonLat(lonLat: number[]): number[];
 	}
 }
 
 Map.prototype.getPixelXFromLongitude = getPixelXFromLongitude;
 Map.prototype.getPixelYFromLatitude = getPixelYFromLatitude;
+Map.prototype.getPixelXYFromLonLat = getPixelXYFromLonLat;
 
 // create a map
 export const createMap = (

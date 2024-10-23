@@ -14,6 +14,7 @@
 	transform-origin: right top;
 	transition: all 0.3s ease-in-out;
 	width: 400px;
+	z-index: 100;
 
 	&__visible {
 		opacity: 1;

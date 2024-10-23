@@ -1,0 +1,55 @@
+@import '../../styles/variables';
+
+$point-size: 9px;
+
+.distanceMeasurement {
+
+	height: calc(100vh - #{$ruler-width * 2});
+	left: $ruler-width;
+	overflow: hidden;
+	pointer-events: none;
+	position: fixed;
+	top: $ruler-width;
+	width: calc(100vw - #{$ruler-width * 2});
+	z-index: 100;
+
+	&__point {
+		background-color: red;
+		border-radius: 100%;
+		cursor: move;
+		display: block;
+		height: $point-size;
+		margin-left: $point-size / -2;
+		margin-top: $point-size / -2;
+		pointer-events: initial;
+		position: absolute;
+		width: $point-size;
+	}
+
+	&__arc {
+		height: calc(100vh - #{$ruler-width * 2});
+		left: 0;
+		position: absolute;
+		top: 0;
+		width: calc(100vw - #{$ruler-width * 2});
+
+		path {
+			fill: none;
+			stroke: red;
+			stroke-width: 2px;
+		}
+	}
+
+	&__distance {
+		color: red;
+		font-size: 13px;
+		height: 20px;
+		margin-left: -50px;
+		margin-top: -10px;
+		line-height: 20px;
+		position: absolute;
+		text-align: center;
+		width: 100px;
+	}
+
+}

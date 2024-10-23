@@ -4,6 +4,7 @@ export const ls = {
 	DEFAULT_FORMAT_COORDINATES: false,
 	DEFAULT_SHOW_COORDINATES: true,
 	DEFAULT_SHOW_MAJOR_PARALLELS: true,
+	DEFAULT_USE_MILES: false,
 	DEFAULT_ZOOM: 3.0,
 
 	get center(): number[] {
@@ -61,6 +62,15 @@ export const ls = {
 
 		set show_major_parallels(value: boolean) {
 			localStorage.setItem('show_major_parallels', value ? '1' : '0');
+		},
+
+		get use_miles(): boolean {
+			const value: string|null = localStorage.getItem('use_miles');
+			return value === null ? ls.DEFAULT_USE_MILES : value === '1';
+		},
+
+		set use_miles(value: boolean) {
+			localStorage.setItem('use_miles', value ? '1' : '0');
 		}
 
 	}

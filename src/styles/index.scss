@@ -42,4 +42,5 @@ html {
 	position: absolute;
 	right: $ruler-width + 10px;
 	transition: top 0.3s ease-in-out;
+	z-index: 99;
 }
