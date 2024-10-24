@@ -3,8 +3,9 @@ import EarthMap from "./components/EarthMap/EarthMap";
 import {ls} from "./utils/ls";
 import Popup from "./components/ui/Popup/Popup";
 import Button from "./components/ui/Button/Button";
-import {SVG_PATH_RULER, SVG_PATH_SETTINGS} from "./utils/svgPaths";
+import {SVG_PATH_FULLSCREEN_OFF, SVG_PATH_FULLSCREEN_ON, SVG_PATH_RULER, SVG_PATH_SETTINGS} from "./utils/svgPaths";
 import Switch from "./components/ui/Switch/Switch";
+import useFullscreen from "./hooks/useFullscreen";
 
 const App = () => {
 
@@ -23,6 +24,8 @@ const App = () => {
 	useEffect(() => {ls.options.show_coordinates = showCoordinates}, [showCoordinates]);
 	useEffect(() => {ls.options.show_major_parallels = showMajorParallels}, [showMajorParallels]);
 	useEffect(() => {ls.options.use_miles = useMiles}, [useMiles]);
+
+	const {fullscreen, toggle} = useFullscreen();
 
 	return (
 		<div>
@@ -50,6 +53,11 @@ const App = () => {
 					hint="Distance measurement"
 					keepState={true}
 					pressed={distanceMeasurement}
+				/>
+				<Button
+					onClick={() => toggle()}
+					icon={fullscreen ? SVG_PATH_FULLSCREEN_OFF : SVG_PATH_FULLSCREEN_ON}
+					hint={(fullscreen ? 'Exit' : 'Enter') + ' fullscreen mode'}
 				/>
 			</div>
 

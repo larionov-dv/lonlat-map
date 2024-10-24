@@ -115,8 +115,10 @@ const EarthMap: FC<Props> = ({id, center, zoom, showCoordinates, formatCoordinat
 	useEffect(() => {
 		const handleResize = () => setTimeout(updateRect, 50);
 		window.addEventListener('resize', handleResize);
+		window.addEventListener('fullscreenchange', handleResize);
 		return () => {
 			window.removeEventListener('resize', handleResize);
+			window.removeEventListener('fullscreenchange', handleResize);
 		};
 	}, []);
 
