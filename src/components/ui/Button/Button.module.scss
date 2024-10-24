@@ -1,0 +1,37 @@
+@import '../../../styles/variables';
+@import '../../../styles/mixins';
+
+$button-size: 36px;
+
+.button {
+	@include flexbox;
+	background-color: white;
+	border: $ruler-border;
+	cursor: pointer;
+	height: $button-size;
+	margin-top: 10px;
+	width: $button-size;
+
+	& * {
+		pointer-events: none;
+	}
+
+	svg {
+		height: $button-size / 3 * 2;
+		width: $button-size / 3 * 2;
+
+		path {
+			fill: black;
+		}
+	}
+
+	&:active, &__pressed {
+		background-color: black;
+		border-color: white;
+
+		svg path {
+			fill: white;
+		}
+	}
+
+}

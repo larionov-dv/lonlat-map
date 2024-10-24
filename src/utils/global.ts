@@ -1,0 +1,1 @@
+export const RULER_WIDTH: number = 20;

@@ -1,6 +1,10 @@
 export const ls = {
 
 	DEFAULT_CENTER: [10.0, 25.0],
+	DEFAULT_FORMAT_COORDINATES: false,
+	DEFAULT_SHOW_COORDINATES: true,
+	DEFAULT_SHOW_MAJOR_PARALLELS: true,
+	DEFAULT_USE_MILES: false,
 	DEFAULT_ZOOM: 3.0,
 
 	get center(): number[] {
@@ -29,6 +33,46 @@ export const ls = {
 		} else {
 			localStorage.setItem('zoom', value.toString());
 		}
+	},
+
+	options: {
+
+		get format_coordinates(): boolean {
+			const value: string|null = localStorage.getItem('format_coordinates');
+			return value === null ? ls.DEFAULT_FORMAT_COORDINATES : value === '1';
+		},
+
+		set format_coordinates(value: boolean) {
+			localStorage.setItem('format_coordinates', value ? '1' : '0');
+		},
+
+		get show_coordinates(): boolean {
+			const value: string|null = localStorage.getItem('show_coordinates');
+			return value === null ? ls.DEFAULT_SHOW_COORDINATES : value === '1';
+		},
+
+		set show_coordinates(value: boolean) {
+			localStorage.setItem('show_coordinates', value ? '1' : '0');
+		},
+
+		get show_major_parallels(): boolean {
+			const value: string|null = localStorage.getItem('show_major_parallels');
+			return value === null ? ls.DEFAULT_SHOW_MAJOR_PARALLELS : value === '1';
+		},
+
+		set show_major_parallels(value: boolean) {
+			localStorage.setItem('show_major_parallels', value ? '1' : '0');
+		},
+
+		get use_miles(): boolean {
+			const value: string|null = localStorage.getItem('use_miles');
+			return value === null ? ls.DEFAULT_USE_MILES : value === '1';
+		},
+
+		set use_miles(value: boolean) {
+			localStorage.setItem('use_miles', value ? '1' : '0');
+		}
+
 	}
 
 };
